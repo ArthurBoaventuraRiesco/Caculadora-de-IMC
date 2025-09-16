@@ -25,19 +25,25 @@ jobs:
           curl -L -o junit-platform-console-standalone.jar \
           https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.2/junit-platform-console-standalone-1.10.2.jar
 
-     
+      # Compile para uma pasta dedicada (build/classes)
       - name: Compile
         run: |
-          javac -encoding UTF-8 -cp .:junit-platform-console-standalone.jar $(git ls-files '*.java')
+          mkdir -p build/classes
+          javac -encoding UTF-8 \
+            -cp junit-platform-console-standalone.jar \
+            -d build/classes \
+            $(git ls-files '*.java')
 
+      # Escaneia APENAS build/classes (onde estão os .class)
       - name: Run Tests (JUnit 5)
         run: |
           mkdir -p build/test-results
           java -jar junit-platform-console-standalone.jar \
-            --class-path . \
+            --class-path build/classes \
             --scan-classpath \
             --fail-if-no-tests \
-            --reports-dir build/test-results
+            --reports-dir build/test-results \
+            --details tree
 
       - name: Upload Test Reports
         if: always()
