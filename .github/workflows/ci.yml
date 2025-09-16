@@ -1,0 +1,47 @@
+name: CI - Java 21 + JUnit
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download JUnit Console
+        run: |
+          curl -L -o junit-platform-console-standalone.jar \
+          https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.2/junit-platform-console-standalone-1.10.2.jar
+
+     
+      - name: Compile
+        run: |
+          javac -encoding UTF-8 -cp .:junit-platform-console-standalone.jar $(git ls-files '*.java')
+
+      - name: Run Tests (JUnit 5)
+        run: |
+          mkdir -p build/test-results
+          java -jar junit-platform-console-standalone.jar \
+            --class-path . \
+            --scan-classpath \
+            --fail-if-no-tests \
+            --reports-dir build/test-results
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-reports
+          path: build/test-results
